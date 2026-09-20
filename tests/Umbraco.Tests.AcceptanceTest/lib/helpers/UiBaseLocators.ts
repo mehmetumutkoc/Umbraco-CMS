@@ -1208,7 +1208,9 @@ export class UiBaseLocators extends BasePage {
   async updateIcon(iconName: string) {
     await this.click(this.iconBtn, { force: true });
     await this.searchForTypeToFilterValue(iconName);
-    await this.clickLabelWithName(iconName, true, true);
+    const iconOption = this.page.getByLabel(iconName, {exact: true});
+    await iconOption.scrollIntoViewIfNeeded();
+    await this.click(iconOption, {force: true});
     await this.clickSubmitButton();
   }
 
@@ -1412,6 +1414,10 @@ export class UiBaseLocators extends BasePage {
       this.validationMessage.filter({ hasText: message }),
       isVisible,
     );
+  }
+
+  async doesSelectedValidationOptionHaveValue(value: string) {
+    await this.hasValue(this.validation, value);
   }
 
   // Composition & Structure Methods
