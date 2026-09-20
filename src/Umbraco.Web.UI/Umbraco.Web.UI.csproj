@@ -19,6 +19,9 @@
 
   <Import Project="..\Umbraco.Cms.Targets\buildTransitive\Umbraco.Cms.Targets.props" />
   <Import Project="..\Umbraco.Cms.Targets\buildTransitive\Umbraco.Cms.Targets.targets" />
+  <!-- ProjectReference does not import NuGet buildTransitive props; this enables *.runtimeconfig.dev.json
+       so Razor runtime compilation can resolve System.Security.Cryptography.* from the NuGet cache. -->
+  <Import Project="..\Umbraco.Cms.DevelopmentMode.Backoffice\buildTransitive\Umbraco.Cms.DevelopmentMode.Backoffice.props" />
   <ItemGroup>
     <ProjectReference Include="..\Umbraco.Cms.DevelopmentMode.Backoffice\Umbraco.Cms.DevelopmentMode.Backoffice.csproj" />
     <ProjectReference Include="..\Umbraco.Cms\Umbraco.Cms.csproj" />
