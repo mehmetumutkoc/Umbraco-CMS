@@ -1,3 +1,5 @@
+using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Extensions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -38,8 +40,9 @@ public sealed class FuzulFormsController : SurfaceController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Apply(FuzulApplyFormModel model)
+    public async Task<IActionResult> Apply(FuzulApplyFormModel model, Guid sectionKey)
     {
+        IPublishedElement? section = ResolveSection(sectionKey, "fuzulApplySection");
         ValidatePdf(model.Presentation, nameof(model.Presentation), required: true);
         if (ModelState.IsValid == false)
         {
@@ -47,19 +50,26 @@ public sealed class FuzulFormsController : SurfaceController
         }
 
         var filePath = await SavePdfAsync(model.Presentation!);
-        SaveSubmission(
+        var saved = SaveSubmission(
             "apply",
             $"Startup: {model.StartupName}{Environment.NewLine}Website: {model.Website}{Environment.NewLine}Industry: {model.Industry}{Environment.NewLine}Founder: {model.FounderName} <{model.FounderEmail}>{Environment.NewLine}{model.Summary}",
             filePath);
 
-        TempData["FuzulApplySuccess"] = "Başvurunuz alındı.";
+        if (!saved)
+        {
+            ModelState.AddModelError("", "Başvuru kaydedilemedi. Lütfen tekrar deneyin.");
+            return CurrentUmbracoPage();
+        }
+
+        SetSuccess(section, sectionKey, "FuzulApplySuccess", "Başvurunuz alındı.");
         return RedirectToCurrentUmbracoPage();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Contact(FuzulContactFormModel model)
+    public async Task<IActionResult> Contact(FuzulContactFormModel model, Guid sectionKey)
     {
+        IPublishedElement? section = ResolveSection(sectionKey, "fuzulContactSection");
         ValidatePdf(model.Attachment, nameof(model.Attachment), required: false);
         if (ModelState.IsValid == false)
         {
@@ -70,13 +80,50 @@ public sealed class FuzulFormsController : SurfaceController
             ? await SavePdfAsync(model.Attachment)
             : null;
 
-        SaveSubmission(
+        var saved = SaveSubmission(
             "contact",
             $"Name: {model.FullName}{Environment.NewLine}Phone: {model.Phone}{Environment.NewLine}Email: {model.Email}",
             filePath);
 
-        TempData["FuzulContactSuccess"] = "Mesajınız gönderildi.";
+        if (!saved)
+        {
+            ModelState.AddModelError("", "Mesaj kaydedilemedi. Lütfen tekrar deneyin.");
+            return CurrentUmbracoPage();
+        }
+
+        SetSuccess(section, sectionKey, "FuzulContactSuccess", "Mesajınız gönderildi.");
         return RedirectToCurrentUmbracoPage();
+    }
+
+    private IPublishedElement? ResolveSection(Guid key, string alias)
+    {
+        if (CurrentPage is null)
+        {
+            ModelState.AddModelError("", "Form sayfası bulunamadı.");
+            return null;
+        }
+
+        if (key == Guid.Empty && CurrentPage.ContentType.Alias == FuzulVenturesAliases.Home && !CurrentPage.Value<bool>("builderEnabled")) return null;
+        var block = FuzulView.Blocks(CurrentPage, "pageSections").FirstOrDefault(x => x.Content.Key == key && x.Content.ContentType.Alias == alias);
+        if (block is null || block.Settings?.Value<bool>("hidden") == true)
+        {
+            ModelState.AddModelError("", "Bu form artık kullanılamıyor. Sayfayı yenileyin.");
+            return null;
+        }
+
+        return block.Content;
+    }
+
+    private void SetSuccess(IPublishedElement? section, Guid key, string legacyKey, string fallback)
+    {
+        if (section is null)
+        {
+            TempData[legacyKey] = fallback;
+            return;
+        }
+
+        TempData["FuzulFormSuccessKey"] = key.ToString("N");
+        TempData["FuzulFormSuccess"] = FuzulView.Text(section, "successMessage", fallback);
     }
 
     private void ValidatePdf(IFormFile? file, string key, bool required)
@@ -118,14 +165,14 @@ public sealed class FuzulFormsController : SurfaceController
         return $"/fuzul/uploads/{storedName}";
     }
 
-    private void SaveSubmission(string kind, string payload, string? filePath)
+    private bool SaveSubmission(string kind, string payload, string? filePath)
     {
         try
         {
-            var page = CurrentPage;
+            var page = CurrentPage is null ? null : FuzulBuilder.Site(CurrentPage);
             if (page is null)
             {
-                return;
+                return false;
             }
 
             Guid parentKey = page.Key;
@@ -145,11 +192,12 @@ public sealed class FuzulFormsController : SurfaceController
                 submission.SetValue("filePath", filePath);
             }
 
-            _contentService.Save(submission);
+            return _contentService.Save(submission).Success;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Could not store a Fuzul form submission.");
+            return false;
         }
     }
 }

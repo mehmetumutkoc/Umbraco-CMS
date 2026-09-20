@@ -1,0 +1,13 @@
+﻿@model FuzulSectionModel
+<section id="@Model.Anchor" class="fv-section fv-space-normal @Model.Class" style="@Model.Style" data-fv-stage="@Model.Key">
+    <div class="container"><div class="fv-image-text @(Model.Text("imagePosition") == "Sağ" ? "fv-image-right" : "")">
+        @if (!string.IsNullOrWhiteSpace(FuzulView.MediaUrl(Model.Content, "image", "")))
+        { <img class="fv-feature-image" src="@FuzulView.MediaUrl(Model.Content, "image", "")" alt="@Model.Text("imageAlt")" loading="lazy"> }
+        <div class="fv-richtext">
+            @if (!string.IsNullOrWhiteSpace(Model.Text("title"))) { <h2>@Model.Text("title")</h2> }
+            @FuzulView.Html(Model.Content, "text", "")
+            @await Html.PartialAsync("~/Views/Partials/Fuzul/Buttons.cshtml", Model)
+        </div>
+    </div></div>
+    @await Html.PartialAsync("~/Views/Partials/Fuzul/Widgets.cshtml", Model)
+</section>

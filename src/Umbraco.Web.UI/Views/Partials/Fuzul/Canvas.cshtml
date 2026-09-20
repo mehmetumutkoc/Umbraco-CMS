@@ -1,0 +1,12 @@
+@model FuzulSectionModel
+@{
+    var minHeight = FuzulBuilder.Number(Model.Text("minHeight"), 640, 200, 1200);
+    var style = string.IsNullOrWhiteSpace(Model.Style) ? "min-height:" + minHeight + "px" : Model.Style + ";min-height:" + minHeight + "px";
+}
+<section id="@Model.Anchor" class="fv-canvas-section @Model.Class" style="@style" data-fv-stage="@Model.Key">
+    @if (!string.IsNullOrWhiteSpace(Model.Text("title")))
+    {
+        <p class="fv-canvas-note">@Model.Text("title")</p>
+    }
+    @await Html.PartialAsync("~/Views/Partials/Fuzul/Widgets.cshtml", Model)
+</section>

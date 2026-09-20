@@ -1,0 +1,13 @@
+/* Integration fixes; the reference stylesheet remains the visual source. */
+html { scroll-behavior: smooth; }
+section[id], #medya, .cs-header { scroll-margin-top: 100px; }
+.fuzul-member-name { font-size: 20px; margin-top: 22px; }
+.modal-title, .modal-body { color: #010d17; }
+.fuzul-form-status, .fuzul-validation { color: #fff; margin-top: 20px; font-size: 18px; }
+.validation-summary-valid { display: none; }
+.fuzul-skip-link { position: fixed; top: -100px; left: 16px; z-index: 10000; padding: 12px 20px; background: white; color: #010d17; }
+.fuzul-skip-link:focus { top: 16px; }
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid #ff6c00; outline-offset: 5px; }
+button.cs_munu_toggle { background: transparent; border: 0; color: inherit; padding: 0; }
+@media (pointer: coarse) { .cursor1, .cursor2 { display: none !important; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } [data-aos] { opacity: 1 !important; transform: none !important; } .wow { visibility: visible !important; } }

@@ -1,0 +1,125 @@
+﻿@model FuzulSectionModel
+@{
+    var apply = Model.Content.ContentType.Alias == "fuzulApplySection";
+    var action = apply ? "Apply" : "Contact";
+    var email = Model.Text("email", FuzulView.Text(Model.Site, "email", ""));
+    var isThisForm = Context.Request.HasFormContentType && Context.Request.Form["SectionKey"].ToString() == Model.Key;
+    string FieldValue(string name) => isThisForm && ViewData.ModelState.TryGetValue(name, out var state) ? state.AttemptedValue ?? "" : "";
+    var successKey = TempData.Peek("FuzulFormSuccessKey") as string;
+    var successMessage = successKey == Model.Key ? TempData["FuzulFormSuccess"] as string : null;
+    if (successKey == Model.Key)
+    {
+        TempData.Remove("FuzulFormSuccessKey");
+    }
+}
+<section id="@Model.Anchor" class="p-tb-10 @Model.Class" style="@Model.Style" data-fv-stage="@Model.Key">
+    <div class="container">
+        <div class="row cs-item-middle basvurrow">
+            <div class="col-lg-6 col-sm-12">
+                <div class="cs-contact-page-content">
+                    <h2 data-aos="zoom-in">@Model.Text("title", apply ? "BAŞVURU FORMU" : "İLETİŞİM")</h2>
+                    @FuzulView.Html(Model.Content, "text", "")
+                    @if (!string.IsNullOrWhiteSpace(email))
+                    {
+                        <div class="member-contact-info">
+                            <div class="contact-details">
+                                <p>@FuzulView.Text(Model.Site, "emailLabel", "E-Mail")</p>
+                                <p class="color-white margin-0"><a href="mailto:@email">@email</a></p>
+                            </div>
+                        </div>
+                    }
+                    @if (!Model.Content.Value<bool>("hideSocial"))
+                    {
+                        <div class="member-social-link">
+                            <p>@FuzulView.Text(Model.Site, "socialLabel", "Sosyal Medya")</p>
+                            <div class="member-details-social">
+                                @foreach (var link in FuzulView.Links(Model.Site, "socialLinks"))
+                                {
+                                    <a class="cs-btn" href="@FuzulBuilder.SafeUrl(link.Url)" target="@link.Target" rel="noopener noreferrer"><p>@link.Name</p></a>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-6 col-sm-12" data-aos="zoom-in">
+                @using (Html.BeginUmbracoForm<FuzulFormsController>(action, null, new { @class = "cs-contact-form fv-form", id = "form-" + Model.Key, enctype = "multipart/form-data" }))
+                {
+                    <input type="hidden" name="SectionKey" value="@Model.Key">
+                    @if (isThisForm)
+                    {
+                        @Html.ValidationSummary(false, "", new { @class = "fuzul-validation", role = "alert" })
+                    }
+                    <ul>
+                        @if (apply)
+                        {
+                            <li class="grid grid-2">
+                                <label class="fv-sr-only" for="@(Model.Key)-StartupName">@Model.Text("labelStartupName", "Girişimin Adı")</label>
+                                <input id="@(Model.Key)-StartupName" type="text" name="StartupName" value="@FieldValue("StartupName")" placeholder="@Model.Text("labelStartupName", "Girişimin Adı")" required>
+                                <label class="fv-sr-only" for="@(Model.Key)-Website">@Model.Text("labelWebsite", "Web Adresi")</label>
+                                <input id="@(Model.Key)-Website" type="text" name="Website" value="@FieldValue("Website")" placeholder="@Model.Text("labelWebsite", "Web Adresi")" required>
+                            </li>
+                            <li>
+                                <label class="fv-sr-only" for="@(Model.Key)-Summary">@Model.Text("labelSummary", "Girişiminizi Kısaca Anlatın")</label>
+                                <textarea id="@(Model.Key)-Summary" name="Summary" placeholder="@Model.Text("labelSummary", "Girişiminizi Kısaca Anlatın")">@FieldValue("Summary")</textarea>
+                            </li>
+                            <li>
+                                <label class="fv-sr-only" for="@(Model.Key)-Industry">@Model.Text("labelIndustry", "Faaliyet Alanı")</label>
+                                <select id="@(Model.Key)-Industry" name="Industry">
+                                    <option value="">@Model.Text("labelIndustry", "Faaliyet Alanı")</option>
+                                    @foreach (var option in Model.Text("industryOptions", "İnşaat Teknolojileri\nGayrimenkul Teknolojileri\nYenilenebilir Enerji ve İklim Teknolojileri\nUlaştırma Teknolojileri\nDiğer").Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                                    {
+                                        if (FieldValue("Industry") == option)
+                                        {
+                                            <option value="@option" selected>@option</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@option">@option</option>
+                                        }
+                                    }
+                                </select>
+                            </li>
+                            <li class="grid grid-2">
+                                <label class="fv-sr-only" for="@(Model.Key)-FounderName">@Model.Text("labelFounderName", "Kurucunun İsmi")</label>
+                                <input id="@(Model.Key)-FounderName" type="text" name="FounderName" value="@FieldValue("FounderName")" placeholder="@Model.Text("labelFounderName", "Kurucunun İsmi")" required>
+                                <label class="fv-sr-only" for="@(Model.Key)-FounderEmail">@Model.Text("labelFounderEmail", "Kurucunun E-Posta Adresi")</label>
+                                <input id="@(Model.Key)-FounderEmail" type="email" name="FounderEmail" value="@FieldValue("FounderEmail")" placeholder="@Model.Text("labelFounderEmail", "Kurucunun E-Posta Adresi")" required>
+                            </li>
+                            <li>
+                                <p>@Model.Text("uploadLabel", "Yatırım Sunumunuzu Ekleyin")</p>
+                                <input id="@(Model.Key)-upload" type="file" name="Presentation" accept="application/pdf,.pdf" required aria-describedby="@(Model.Key)-upload-help">
+                                <span id="@(Model.Key)-upload-help">@Model.Text("uploadHelp", "Sadece PDF · En fazla 10 MB")</span>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="grid grid-3">
+                                <label class="fv-sr-only" for="@(Model.Key)-FullName">@Model.Text("labelFullName", "Ad Soyad")</label>
+                                <input id="@(Model.Key)-FullName" type="text" name="FullName" value="@FieldValue("FullName")" placeholder="@Model.Text("labelFullName", "Ad Soyad")" required>
+                                <label class="fv-sr-only" for="@(Model.Key)-Phone">@Model.Text("labelPhone", "Telefon")</label>
+                                <input id="@(Model.Key)-Phone" type="tel" name="Phone" value="@FieldValue("Phone")" placeholder="@Model.Text("labelPhone", "Telefon")" required>
+                                <label class="fv-sr-only" for="@(Model.Key)-Email">@Model.Text("labelEmail", "E-posta")</label>
+                                <input id="@(Model.Key)-Email" type="email" name="Email" value="@FieldValue("Email")" placeholder="@Model.Text("labelEmail", "Email")" required>
+                            </li>
+                            <li>
+                                <p>@Model.Text("uploadLabel", "Dosya Yükle")</p>
+                                <input id="@(Model.Key)-upload" type="file" name="Attachment" accept="application/pdf,.pdf" aria-describedby="@(Model.Key)-upload-help">
+                                <span id="@(Model.Key)-upload-help">@Model.Text("uploadHelp", "Sadece PDF · En fazla 10 MB")</span>
+                            </li>
+                        }
+                        <li>
+                            <div class="fv-richtext fv-privacy">@FuzulView.Html(Model.Content, "privacyText", "")</div>
+                            <button type="submit"><span>@Model.Text("buttonLabel", apply ? "BAŞVUR" : "Gönder")</span></button>
+                            @if (!string.IsNullOrWhiteSpace(successMessage))
+                            {
+                                <div class="fuzul-form-status" role="status">@successMessage</div>
+                            }
+                        </li>
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+    @await Html.PartialAsync("~/Views/Partials/Fuzul/Widgets.cshtml", Model)
+</section>

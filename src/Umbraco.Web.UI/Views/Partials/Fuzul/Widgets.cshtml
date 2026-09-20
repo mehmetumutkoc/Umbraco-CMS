@@ -1,0 +1,7 @@
+@model FuzulSectionModel
+<div class="fv-widget-layer">
+@foreach (var widget in FuzulDesigner.WidgetsFor(Model.Page, Model.Key))
+{
+    @FuzulDesigner.Markup(widget)
+}
+</div>

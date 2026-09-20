@@ -1,0 +1,9 @@
+﻿@model FuzulSectionModel
+<section id="@Model.Anchor" class="fv-section fv-space-normal fv-cta @Model.Class" style="@Model.Style" data-fv-stage="@Model.Key">
+    <div class="container">
+        @if (!string.IsNullOrWhiteSpace(Model.Text("title"))) { <h2>@Model.Text("title")</h2> }
+        <div class="fv-richtext">@FuzulView.Html(Model.Content, "text", "")</div>
+        @await Html.PartialAsync("~/Views/Partials/Fuzul/Buttons.cshtml", Model)
+    </div>
+    @await Html.PartialAsync("~/Views/Partials/Fuzul/Widgets.cshtml", Model)
+</section>

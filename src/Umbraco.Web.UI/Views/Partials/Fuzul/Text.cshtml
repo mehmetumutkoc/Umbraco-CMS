@@ -1,0 +1,19 @@
+﻿@model FuzulSectionModel
+<section id="@Model.Anchor" class="cs-about-style-2 @Model.Class" style="@Model.Style" data-fv-stage="@Model.Key">
+    <div class="container">
+        <div class="row cs-item-middle">
+            <div class="col-lg-12">
+                <div class="cs-about-content">
+                    @if (!string.IsNullOrWhiteSpace(Model.Text("title")))
+                    {
+                        <div class="about-title">
+                            <h2 class="wow animate__fadeInUp" data-wow-duration="0.5s">@Model.Text("title")</h2>
+                        </div>
+                    }
+                    <div class="cs-about-text">@FuzulView.Html(Model.Content, "text", "")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @await Html.PartialAsync("~/Views/Partials/Fuzul/Widgets.cshtml", Model)
+</section>

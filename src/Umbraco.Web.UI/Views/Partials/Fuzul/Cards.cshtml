@@ -1,0 +1,21 @@
+﻿@model FuzulSectionModel
+@{ var stats = Model.Content.ContentType.Alias == "fuzulStatsSection"; }
+<section id="@Model.Anchor" class="fv-section fv-space-normal @Model.Class @(stats ? "fv-stats" : "")" style="@Model.Style" data-fv-stage="@Model.Key">
+    <div class="container">
+        @if (!string.IsNullOrWhiteSpace(Model.Text("title"))) { <h2>@Model.Text("title")</h2> }
+        <div class="fv-grid" style="--fv-columns:@FuzulBuilder.Number(Model.Text("columns"), 3, 1, 5)">
+        @foreach (var block in FuzulView.Blocks(Model.Content, "items"))
+        {
+            var item = block.Content;
+            var image = FuzulView.MediaUrl(item, "image", "");
+            <article class="fv-card">
+                @if (!string.IsNullOrWhiteSpace(image)) { <img src="@image" alt="@FuzulView.Text(item, "imageAlt", "")" loading="lazy"> }
+                <h3>@FuzulView.Text(item, "title", "")</h3><p>@FuzulView.Text(item, "text", "")</p>
+                @foreach (var link in FuzulView.Links(item, "links"))
+                { <a class="fv-text-link" href="@FuzulBuilder.SiteLink(link, Model.Site)" target="@link.Target" rel="noopener noreferrer">@link.Name</a> }
+            </article>
+        }
+        </div>
+    </div>
+    @await Html.PartialAsync("~/Views/Partials/Fuzul/Widgets.cshtml", Model)
+</section>

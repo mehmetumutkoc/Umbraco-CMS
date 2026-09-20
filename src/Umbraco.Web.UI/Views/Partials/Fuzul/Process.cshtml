@@ -1,0 +1,33 @@
+﻿@model FuzulSectionModel
+<section id="@Model.Anchor" class="p-x-10 @Model.Class" style="@Model.Style" data-fv-stage="@Model.Key">
+    <div class="container-fluid cs-full-width">
+        <div class="row cs-skills-wrapper">
+            <div class="col-lg-2">
+                <div class="title-left">
+                    <h2>@Model.Text("processTitle", "Yatırım Süreci")</h2>
+                    <span>@Model.Text("processEyebrow", "Fuzul Ventures")</span>
+                </div>
+            </div>
+            <div class="col-lg-10">
+                <div class="skills-divider"></div>
+                <div class="cs-skill-items">
+                    @foreach (var block in FuzulView.Blocks(Model.Content, "processSteps"))
+                    {
+                        var item = block.Content;
+                        <div class="cs-skill-item">
+                            <span>@FuzulView.Text(item, "number", "")</span>
+                            <div class="skill-title">
+                                <img src="@FuzulView.MediaUrl(item, "image", "/fuzul/images/r1.svg")" alt="" loading="lazy">
+                                <h3 class="cs-btn wow animate__fadeInUp" data-wow-duration="1s">@FuzulView.Text(item, "title", "")</h3>
+                            </div>
+                            <div class="cs-skill-para">
+                                <p>@FuzulView.Text(item, "text", "")</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    @await Html.PartialAsync("~/Views/Partials/Fuzul/Widgets.cshtml", Model)
+</section>

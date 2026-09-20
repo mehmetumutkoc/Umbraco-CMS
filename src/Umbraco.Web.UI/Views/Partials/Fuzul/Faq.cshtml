@@ -1,0 +1,11 @@
+﻿@model FuzulSectionModel
+<section id="@Model.Anchor" class="fv-section fv-space-normal fv-faq @Model.Class" style="@Model.Style" data-fv-stage="@Model.Key">
+    <div class="container">
+        @if (!string.IsNullOrWhiteSpace(Model.Text("title"))) { <h2>@Model.Text("title")</h2> }
+        @foreach (var block in FuzulView.Blocks(Model.Content, "items"))
+        {
+            <details><summary>@FuzulView.Text(block.Content, "title", "")</summary><div class="fv-richtext">@FuzulView.Html(block.Content, "text", "")</div></details>
+        }
+    </div>
+    @await Html.PartialAsync("~/Views/Partials/Fuzul/Widgets.cshtml", Model)
+</section>

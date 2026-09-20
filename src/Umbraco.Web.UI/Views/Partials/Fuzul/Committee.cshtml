@@ -1,0 +1,41 @@
+﻿@model FuzulSectionModel
+<section id="@Model.Anchor" class="p-t-10 @Model.Class" style="@Model.Style" data-fv-stage="@Model.Key">
+    <div class="container-fluid cs-full-width">
+        <div class="row">
+            <div class="col-lg-2">
+                <div class="title-left">
+                    <h2>@Model.Text("committeeTitle", "Yatırım Komitesi")</h2>
+                    <span>@Model.Text("committeeEyebrow", "Fuzul Ventures")</span>
+                </div>
+            </div>
+            <div class="col-md-10">
+                <div class="row">
+                    @foreach (var block in FuzulView.Blocks(Model.Content, "committeeMembers"))
+                    {
+                        var item = block.Content;
+                        var name = FuzulView.Text(item, "displayName", "");
+                        var memberId = "member-" + Model.Key + "-" + item.Key.ToString("N");
+                        <div class="col-sm col-6">
+                            <a class="text-center" href="#@memberId" data-bs-toggle="modal" data-bs-target="#@memberId">
+                                <img class="member-details-image" src="@FuzulView.MediaUrl(item, "image", "/fuzul/images/farukakbal.png")" alt="@name" loading="lazy">
+                                <h3 class="fuzul-member-name">@name</h3>
+                            </a>
+                            <div class="modal fade" id="@memberId" tabindex="-1" aria-labelledby="@(memberId)-title" aria-hidden="true">
+                                <div class="modal-dialog modal-lg modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="@(memberId)-title">@FuzulView.Text(item, "modalTitle", name)</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                                        </div>
+                                        <div class="modal-body">@FuzulView.Html(item, "bio", "")</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    @await Html.PartialAsync("~/Views/Partials/Fuzul/Widgets.cshtml", Model)
+</section>

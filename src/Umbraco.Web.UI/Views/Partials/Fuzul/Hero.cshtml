@@ -1,0 +1,52 @@
+﻿@model FuzulSectionModel
+@{
+    var image = FuzulView.MediaUrl(Model.Content, "image", "/fuzul/images/vent.jpg");
+    var style = FuzulBuilder.SectionStyle(Model.Block);
+    if (FuzulBuilder.CssImage(image) != "none")
+    {
+        style = string.IsNullOrWhiteSpace(style) ? "background-image:" + FuzulBuilder.CssImage(image) : style + ";background-image:" + FuzulBuilder.CssImage(image);
+    }
+    var lines = new[] { "heroLine1", "heroLine2", "heroLine3" }
+        .Select(alias => Model.Text(alias))
+        .Where(text => !string.IsNullOrWhiteSpace(text))
+        .ToArray();
+    var durations = new[] { "1000", "1200", "1500" };
+    var links = FuzulView.Links(Model.Content, "links");
+}
+<div id="@Model.Anchor" class="cs-header cs-header-style-2 @Model.Class" style="@style" data-fv-stage="@Model.Key">
+    <div class="hero-container container">
+        <div class="row">
+            <div class="hero-style-2">
+                <div class="hero-content hero-content-style-2">
+                    <div class="hero-heading">
+                        @for (var i = 0; i < lines.Length; i++)
+                        {
+                            <div data-aos="fade-up" data-aos-duration="@durations[Math.Min(i, durations.Length - 1)]"><span class="@(i == 1 ? null : "p-r-2")" data-fv-pin="heading-@(Model.Key)-@i">@lines[i]</span></div>
+                        }
+                    </div>
+                    <div class="hero-btn-with-text-style-2">
+                        <div class="hero-subheading">@FuzulView.Html(Model.Content, "heroSubheading", "")</div>
+                        @if (links.Count > 0)
+                        {
+                            <div class="cs_circle_btn_wrap hero-btn">
+                                <div class="cs_round_btn_wrap_style_2">
+                                    <a href="@FuzulBuilder.SiteLink(links[0], Model.Site)" class="cs_hero_btn cs_round_btn btn-item" data-fv-pin="btn-@(Model.Key)-0" target="@links[0].Target" rel="noopener noreferrer"><span></span>@links[0].Name</a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    @if (links.Count > 1)
+                    {
+                        <div class="fv-links">
+                            @for (var extra = 1; extra < links.Count; extra++)
+                            {
+                                <a class="fv-button" href="@FuzulBuilder.SiteLink(links[extra], Model.Site)" data-fv-pin="btn-@(Model.Key)-@extra" target="@links[extra].Target" rel="noopener noreferrer">@links[extra].Name</a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    @await Html.PartialAsync("~/Views/Partials/Fuzul/Widgets.cshtml", Model)
+</div>

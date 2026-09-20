@@ -1,0 +1,217 @@
+﻿@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment HostEnv
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    Layout = null;
+    var site = FuzulBuilder.Site(Model);
+    var siteName = FuzulView.Text(site, "siteName", "Fuzul Ventures");
+    var title = FuzulView.Text(Model, "seoTitle", Model.Id == site.Id ? siteName : Model.Name + " | " + siteName);
+    var description = FuzulView.Text(Model, "seoDescription", "");
+    var shareImage = FuzulView.MediaUrl(Model, "shareImage", "");
+    var canonical = FuzulBuilder.SafeUrl(Model.Value<string>("canonicalUrl"), Model.Url(mode: UrlMode.Absolute));
+    var language = FuzulBuilder.Language(Model.Value<string>("pageLanguage"));
+    var motion = site.Value<bool>("disableMotion");
+    var hideCursor = site.Value<bool>("disableCursor") || motion;
+    var email = FuzulView.Text(site, "email", "");
+    var usedAnchors = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "top", "main", "iletisim", "medya" };
+    var bodyImage = FuzulBuilder.CssImage(FuzulView.MediaUrl(site, "bodyBackground", ""));
+    var footerImage = FuzulBuilder.CssImage(FuzulView.MediaUrl(site, "footerBackground", ""));
+    var htmlClass = string.Join(" ", new[] { bodyImage != "none" ? "fv-has-body-image" : null, footerImage != "none" ? "fv-has-footer-image" : null }.Where(x => x is not null));
+    var canDesign = await FuzulDesigner.CanDesignAsync(Context, HostEnv);
+    var designerTokens = Antiforgery.GetAndStoreTokens(Context);
+    var designerLayout = FuzulDesigner.Serialize(FuzulDesigner.Parse(Model));
+}
+<!DOCTYPE html>
+<html lang="@language" class="@htmlClass" style="@FuzulBuilder.Theme(site)">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@title</title>
+    <meta name="description" content="@description">
+    <link rel="canonical" href="@canonical">
+    <meta name="robots" content="@(Model.Value<bool>("noIndex") ? "noindex, nofollow" : "index, follow")">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="@title">
+    <meta property="og:description" content="@description">
+    <meta property="og:url" content="@canonical">
+    @if (!string.IsNullOrWhiteSpace(shareImage))
+    {
+        <meta property="og:image" content="@FuzulBuilder.SafeUrl(shareImage)">
+    }
+    <link rel="icon" href="@FuzulView.MediaUrl(site, "favicon", "/fuzul/img/favicon.png")">
+    <link rel="stylesheet" href="/fuzul/css/plugins/bootstrap.min.css">
+    <link rel="stylesheet" href="/fuzul/css/plugins/slick.css">
+    <link rel="stylesheet" href="/fuzul/css/plugins/swiper.min.css">
+    <link rel="stylesheet" href="/fuzul/css/plugins/aos.css">
+    <link rel="stylesheet" href="/fuzul/css/plugins/animate.min.css">
+    <link rel="stylesheet" href="/fuzul/css/style.css">
+    <link rel="stylesheet" href="/fuzul/css/umbraco.css">
+    <link rel="stylesheet" href="/fuzul/css/builder.css" asp-append-version="true">
+    <link rel="stylesheet" href="/fuzul/css/designer.css" asp-append-version="true">
+    <style id="fv-pin-css">@FuzulDesigner.PinCss(Model)</style>
+</head>
+<body id="top" class="fv-site @(motion ? "fv-no-motion" : "") @(hideCursor ? "fv-no-cursor" : "")" data-disable-motion="@motion.ToString().ToLowerInvariant()">
+<a class="fuzul-skip-link" href="#main">İçeriğe geç</a>
+<div class="cursor1"></div>
+<div class="cursor2"></div>
+<div class="loader"><div class="cs-loader-line"></div></div>
+@if (!Model.Value<bool>("hideHeader"))
+{
+    <header class="cs-site-navbar cs-navbar-style @(site.Value<bool>("disableSticky") ? "" : "cs_sticky_header")" data-fv-stage="header">
+        <div class="container">
+            <div class="cs_main_header">
+                <div class="cs_main_header_in">
+                    <div class="cs_main_header_left">
+                        <a href="@site.Url()" class="cs_site_branding" data-fv-pin="header-logo">
+                            <img src="@FuzulView.MediaUrl(site, "logo", "/fuzul/images/ventureslogo.svg")" alt="@siteName">
+                        </a>
+                    </div>
+                    <div class="cs_main_header_right">
+                        <nav class="cs_nav" aria-label="Ana menü">
+                            <ul class="cs_nav_list">
+                                @foreach (var link in FuzulView.Links(site, "navigation"))
+                                {
+                                    <li><a href="@FuzulBuilder.SiteLink(link, site)" target="@link.Target" rel="noopener noreferrer">@link.Name</a></li>
+                                }
+                                @foreach (var link in FuzulView.Links(site, "headerLinks"))
+                                {
+                                    <li><a class="fv-button" href="@FuzulBuilder.SiteLink(link, site)" target="@link.Target" rel="noopener noreferrer">@link.Name</a></li>
+                                }
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="fv-widget-layer">
+            @foreach (var widget in FuzulDesigner.WidgetsFor(Model, "header"))
+            {
+                @FuzulDesigner.Markup(widget)
+            }
+        </div>
+    </header>
+}
+<main id="main">
+@if (Model.ContentType.Alias == FuzulVenturesAliases.Home && !Model.Value<bool>("builderEnabled"))
+{
+    @await Html.PartialAsync("~/Views/Partials/Fuzul/Legacy.cshtml", Model)
+}
+else
+{
+    @foreach (var block in FuzulView.Blocks(Model, "pageSections"))
+    {
+        if (block.Settings?.Value<bool>("hidden") == true || !FuzulBuilder.Templates.TryGetValue(block.Content.ContentType.Alias, out var partial))
+        {
+            continue;
+        }
+
+        var section = new FuzulSectionModel(block, Model, site, FuzulBuilder.UniqueAnchor(block, usedAnchors));
+        @await Html.PartialAsync("~/Views/Partials/Fuzul/" + partial + ".cshtml", section)
+    }
+}
+</main>
+@if (!Model.Value<bool>("hideFooter"))
+{
+    <footer class="cs-footer-container" id="iletisim" data-fv-stage="footer">
+        <div class="cs-footer-img p-tb-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-7">
+                        <div class="cs-social p-b-3" id="medya">
+                            @foreach (var link in FuzulView.Links(site, "socialLinks"))
+                            {
+                                <div class="cs-social-item"><a href="@FuzulBuilder.SafeUrl(link.Url)" target="@link.Target" rel="noopener noreferrer">@link.Name</a></div>
+                            }
+                        </div>
+                        <div class="cs-location p-b-3">
+                            <h2>@FuzulView.Text(site, "location", "")</h2>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(email))
+                        {
+                            <div class="cs-email p-b-3">
+                                <h2><a href="mailto:@email">@email</a></h2>
+                            </div>
+                        }
+                        @FuzulView.Html(site, "footerText", "")
+                        <div class="fv-links">
+                            @foreach (var link in FuzulView.Links(site, "footerLinks"))
+                            {
+                                <a href="@FuzulBuilder.SiteLink(link, site)" target="@link.Target" rel="noopener noreferrer">@link.Name</a>
+                            }
+                        </div>
+                        <div class="cs-footer-divider"></div>
+                        <div class="cs-footer-copyright">
+                            <h6>@FuzulView.Text(site, "copyright", "")</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="fv-widget-layer">
+            @foreach (var widget in FuzulDesigner.WidgetsFor(Model, "footer"))
+            {
+                @FuzulDesigner.Markup(widget)
+            }
+        </div>
+    </footer>
+}
+@if (!site.Value<bool>("hideBackToTop"))
+{
+    <a class="to-top svg-btn" href="#top" aria-label="Sayfanın başına dön">
+        <svg width="50" height="50" viewBox="0 0 98 98" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="49.0645" cy="49.1549" r="47.8649" stroke="#393939"/>
+            <path d="M64.1471 57.8606L49.4516 40.4492L33.9823 57.8606" stroke="#CCCCCC"/>
+        </svg>
+    </a>
+}
+<script src="/fuzul/js/plugins/jQuery-3.6.0.min.js"></script>
+<script src="/fuzul/js/plugins/bootstrap.min.js"></script>
+<script src="/fuzul/js/plugins/slick.min.js"></script>
+<script src="/fuzul/js/plugins/swiper.min.js"></script>
+<script src="/fuzul/js/plugins/wow.min.js"></script>
+<script src="/fuzul/js/plugins/aos.js"></script>
+<script src="/fuzul/js/plugins/counter.js"></script>
+<script src="/fuzul/js/plugins/cursor.min.js"></script>
+<script src="/fuzul/js/main.js"></script>
+<script src="/fuzul/js/umbraco.js"></script>
+<script src="/fuzul/js/builder.js" asp-append-version="true"></script>
+@if (canDesign)
+{
+    <button type="button" class="fv-edit-launch" data-fv-toggle>Sayfayı düzenle</button>
+    <div id="fv-designer"
+         data-page="@Model.Key"
+         data-save="/fuzul/designer/save"
+         data-token="@designerTokens.RequestToken">
+        <script type="application/json" id="fv-layout-data">@Html.Raw(designerLayout)</script>
+        <aside class="fv-toolbox" aria-label="Öğeler">
+            <p>Ekle</p>
+            <button type="button" data-fv-add="button">Buton</button>
+            <button type="button" data-fv-add="text">Yazı</button>
+            <button type="button" data-fv-add="heading">Başlık</button>
+            <button type="button" data-fv-add="image">Görsel</button>
+            <button type="button" data-fv-add="shape">Kutu</button>
+        </aside>
+        <div class="fv-topbar">
+            <strong>Görsel düzenleyici</strong>
+            <button type="button" data-fv-save>Kaydet</button>
+            <button type="button" data-fv-undo>Geri al</button>
+            <button type="button" data-fv-toggle>Bitir</button>
+            <span class="fv-status" data-fv-status></span>
+        </div>
+        <aside class="fv-inspector" hidden>
+            <p>Seçili öğe</p>
+            <label>Metin <input data-fv-field="text" maxlength="200"></label>
+            <label>Bağlantı <input data-fv-field="href" maxlength="400"></label>
+            <label>Görsel URL <input data-fv-field="src" maxlength="400"></label>
+            <label>Arka plan <input type="color" data-fv-field="bg"></label>
+            <label>Yazı rengi <input type="color" data-fv-field="color"></label>
+            <label>Boyut <input type="range" min="10" max="72" data-fv-field="size"></label>
+            <label>Köşe <input type="range" min="0" max="80" data-fv-field="radius"></label>
+            <button type="button" data-fv-delete>Sil</button>
+        </aside>
+    </div>
+    <script src="/fuzul/js/designer.js" asp-append-version="true"></script>
+}
+</body>
+</html>

@@ -13,7 +13,7 @@ using Umbraco.Extensions;
 
 namespace Umbraco.Cms.Web.UI.FuzulVentures;
 
-public sealed class FuzulVenturesCmsSetup
+public sealed partial class FuzulVenturesCmsSetup
 {
     private readonly IConfigurationEditorJsonSerializer _configurationSerializer;
     private readonly IContentService _contentService;
@@ -100,6 +100,7 @@ public sealed class FuzulVenturesCmsSetup
         IContentType homeType = await EnsureHomeTypeAsync(template, submission, formFolder, mediaPicker, urlPicker, richText, sectorsList, processList, committeeList);
 
         await EnsureContentAsync(homeType, template, formFolder, media, sectorElement, stepElement, memberElement);
+        await EnsureFlexibleAsync(template, mediaPicker, richText, urlPicker, sectorsList, processList, committeeList, media);
         _logger.LogInformation("Fuzul Ventures CMS setup finished.");
     }
 
@@ -638,30 +639,44 @@ public sealed class FuzulVenturesCmsSetup
             IndexMedia(imported, child);
         }
 
-        var imagesPath = Path.Combine(_webHostEnvironment.WebRootPath, "fuzul", "images");
-        if (Directory.Exists(imagesPath) == false)
+        var webRoot = _webHostEnvironment.WebRootPath;
+        var imageFolders = new[]
         {
-            _logger.LogWarning("Fuzul image folder was not found at {Path}. Media picker items will be empty until files are copied.", imagesPath);
-            return new MediaLibrary(folder, imported);
-        }
-
-        foreach (var filePath in Directory.GetFiles(imagesPath))
+            Path.Combine(webRoot, "fuzul", "images"),
+            Path.Combine(webRoot, "fuzul", "img"),
+        };
+        var foundFolder = false;
+        foreach (var imagesPath in imageFolders)
         {
-            var fileName = Path.GetFileName(filePath);
-            if (imported.ContainsKey(Path.GetFileNameWithoutExtension(fileName)) || imported.ContainsKey(fileName))
+            if (Directory.Exists(imagesPath) == false)
             {
                 continue;
             }
 
-            try
+            foundFolder = true;
+            foreach (var filePath in Directory.GetFiles(imagesPath))
             {
-                IMedia media = await ImportMediaAsync(filePath, fileName, folder.Key);
-                IndexMedia(imported, media, fileName);
+                var fileName = Path.GetFileName(filePath);
+                if (imported.ContainsKey(Path.GetFileNameWithoutExtension(fileName)) || imported.ContainsKey(fileName))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    IMedia media = await ImportMediaAsync(filePath, fileName, folder.Key);
+                    IndexMedia(imported, media, fileName);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not import {File} into the Fuzul media folder.", fileName);
+                }
             }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Could not import {File} into the Fuzul media folder.", fileName);
-            }
+        }
+
+        if (foundFolder == false)
+        {
+            _logger.LogWarning("Fuzul image folders were not found under {Path}. Media picker items will be empty until files are copied.", Path.Combine(webRoot, "fuzul"));
         }
 
         return new MediaLibrary(folder, imported);

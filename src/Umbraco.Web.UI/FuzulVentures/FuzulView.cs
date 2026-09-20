@@ -43,6 +43,11 @@ public static class FuzulView
             return new HtmlString($"<p>{System.Net.WebUtility.HtmlEncode(text)}</p>");
         }
 
+        if (string.IsNullOrWhiteSpace(fallback))
+        {
+            return new HtmlString(string.Empty);
+        }
+
         return new HtmlString($"<p>{System.Net.WebUtility.HtmlEncode(fallback)}</p>");
     }
 

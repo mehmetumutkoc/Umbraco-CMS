@@ -83,7 +83,8 @@ tools/docfx/
 /src/Umbraco.Web.UI/[Uu]mbraco/[Dd]ata/
 /src/Umbraco.Web.UI/[Uu]mbraco/[Ll]ogs/
 /src/Umbraco.Web.UI/[Uu]mbraco/[Mm]odels/
-/src/Umbraco.Web.UI/Views/
+/src/Umbraco.Web.UI/Views/*
+!/src/Umbraco.Web.UI/Views/fuzulHome.cshtml
 !/src/Umbraco.Web.UI/Views/Partials/blocklist/
 !/src/Umbraco.Web.UI/Views/Partials/grid/
 !/src/Umbraco.Web.UI/Views/_ViewImports.cshtml
@@ -128,3 +129,8 @@ trace.zip
 
 # Playwright local cache
 .playwright-mcp/
+
+# Flexible Fuzul page renderer
+!/src/Umbraco.Web.UI/Views/Partials/
+!/src/Umbraco.Web.UI/Views/Partials/Fuzul/
+!/src/Umbraco.Web.UI/Views/Partials/Fuzul/**

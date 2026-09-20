@@ -1,0 +1,9 @@
+﻿@model FuzulSectionModel
+<div class="fv-links">
+@{ var i = 0; }
+@foreach (var link in FuzulView.Links(Model.Content, "links"))
+{
+    <a class="fv-button" href="@FuzulBuilder.SiteLink(link, Model.Site)" data-fv-pin="btn-@(Model.Key)-@i" target="@link.Target" rel="noopener noreferrer">@link.Name</a>
+    i++;
+}
+</div>
